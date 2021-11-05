@@ -97,17 +97,17 @@ namespace Pinduri.Tests
 
         public class QueryExecutorTest
         {
-            public void Before() 
+            public void Before()
             {
                 var create = @"
 DROP DATABASE IF EXISTS MyDatabase;
 CREATE DATABASE MyDatabase;
 ";
-                new Orm() { ConnectionString = "Server=localhost;User Id=sa;password=Abcd123#" }
+                new Orm() { ConnectionString = "Server=localhost;User Id=sa;Password=Abcd123#;Connect Timeout=3" }
                     .ExecuteNonQuery(new SqlCommand(create));
             }
 
-            public void BeforeEach() 
+            public void BeforeEach()
             {
                 var drop = @"
 DROP TABLE IF EXISTS [OrderDetail];
@@ -387,11 +387,11 @@ CREATE INDEX ix_ProductCategory_Name ON [ProductCategory]([Name]);
 ".Trim().Replace("\r\n", "\n");
 
                 string schema = target.Schema().Trim().Replace("\r\n", "\n");
-                
+
                 Assert.AreEqual(expected, schema);
             }
         }
-        
+
         public static void Go()
         {
             new PUnit()
