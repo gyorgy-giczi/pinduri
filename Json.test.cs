@@ -106,6 +106,21 @@ namespace Pinduri.Tests
             Assert.AreEqual("\"2021-11-25T10:56:37.6780000Z\"", Json.Serialize(DateTime.Parse("2021-11-25 14:56:37.678 +04:00").ToUniversalTime()));
         }
 
+        public void ShouldSerializeTimeSpan()
+        {
+            Assert.AreEqual("\"14:56:37.6780000\"", Json.Serialize(TimeSpan.Parse("14:56:37.678")));
+        }
+
+        public void ShouldSerializeDateTimeOffset()
+        {
+            Assert.AreEqual("\"2021-11-25T14:56:37.6780000+04:00\"", Json.Serialize(DateTimeOffset.Parse("2021-11-25 14:56:37.678 +04:00")));
+        }
+
+        public void ShouldSerializeGuid()
+        {
+            Assert.AreEqual("\"01234567-89ab-cdef-0123-456789abcdef\"", Json.Serialize(Guid.Parse("01234567-89ab-cdef-0123-456789abcdef")));
+        }
+
         public void ShouldSerializeEnum()
         {
             Assert.AreEqual("\"Green\"", Json.Serialize(ConsoleColor.Green));
