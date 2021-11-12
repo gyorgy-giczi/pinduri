@@ -79,7 +79,7 @@ namespace Pinduri.Tests
 
     public class OrmTests
     {
-        public static Orm target = new Orm() { ConnectionString = "Server=localhost;User Id=sa;password=Abcd123#;Database=MyDatabase" }
+        public static Orm target = new Orm() { ConnectionString = "Server=localhost;User Id=sa;password=Abcd123#;Database=pinduri-orm-test" }
             .Entity<Foo>().Index<Foo>(new[] { nameof(Foo.GuidProp), nameof(Foo.DateTimeProp) }, isUnique: true)
             .Entity<Employee>()
             .HasOne<Employee, Employee>("ManagerId", "ManagedEmployees")
@@ -100,8 +100,8 @@ namespace Pinduri.Tests
             public void Before()
             {
                 var create = @"
-DROP DATABASE IF EXISTS MyDatabase;
-CREATE DATABASE MyDatabase;
+DROP DATABASE IF EXISTS [pinduri-orm-test];
+CREATE DATABASE [pinduri-orm-test];
 ";
                 new Orm() { ConnectionString = "Server=localhost;User Id=sa;Password=Abcd123#;Connect Timeout=3" }
                     .ExecuteNonQuery(new SqlCommand(create));
