@@ -1,7 +1,6 @@
 using System;
-using System.Collections.Generic;
 
-namespace Pinduri 
+namespace Pinduri
 {
     internal static class Extensions
     {

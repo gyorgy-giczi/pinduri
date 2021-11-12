@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Pinduri
+﻿namespace Pinduri
 {
     class Program
     {
