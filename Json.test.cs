@@ -43,6 +43,13 @@ namespace Pinduri.Tests
             Assert.AreEqual("null", Json.Serialize((object)null));
             Assert.AreEqual("null", Json.Serialize((JsonTests)null));
             Assert.AreEqual("null", Json.Serialize((char?)null));
+            Assert.AreEqual("null", Json.Serialize((Guid?)null));
+            Assert.AreEqual("null", Json.Serialize(((string, string)?)null));
+        }
+
+        public void ShouldSerializeDBNull()
+        {
+            Assert.AreEqual("null", Json.Serialize(DBNull.Value));
         }
 
         public void ShouldSerializeEmptyString()
@@ -131,9 +138,30 @@ namespace Pinduri.Tests
             Assert.AreEqual("\"Alt, Shift, Control\"", Json.Serialize(ConsoleModifiers.Control | ConsoleModifiers.Alt | ConsoleModifiers.Shift));
         }
 
+        public void ShouldSerializeTuple()
+        {
+            Assert.AreEqual("[1, \"Bar\", \"Green\"]", Json.Serialize((Roarr: 1, Foo: "Bar", Color: ConsoleColor.Green)));
+        }
+
+        public void ShouldSerializeDictionary()
+        {
+            Assert.AreEqual("{ \"stringKey\":\"stringVal\", \"42\":42, \"Green\":\"Green\" }", Json.Serialize(new Dictionary<object, object>() { { "stringKey", "stringVal" }, { 42, 42 }, { ConsoleColor.Green, ConsoleColor.Green } }));
+            Assert.AreEqual("{ \"a\":\"a\", \"b\":\"b\" }", Json.Serialize(new Dictionary<string, string>() { { "a", "a" }, { "b", "b" } }));
+            Assert.AreEqual("{ \"1\":1, \"2\":2 }", Json.Serialize(new Dictionary<int, int>() { { 1, 1 }, { 2, 2 } }));
+        }
+
+        public void ShouldSerializeUri()
+        {
+            Assert.AreEqual("\"http://tempuri.org:12345/roarr?foo=bar\"", Json.Serialize(new Uri("http://tempuri.org:12345/roarr?foo=bar")));
+        }
+
         public void ShouldSerializeEnumerable()
         {
             Assert.AreEqual("[-2, -1, 0, 1, 2]", Json.Serialize(Enumerable.Range(-2, 5)));
+            Assert.AreEqual("[-2, -1, 0, 1, 2]", Json.Serialize(new List<int>(Enumerable.Range(-2, 5))));
+            Assert.AreEqual("[-2, -1, 0, 1, 2]", Json.Serialize(new Queue<int>(Enumerable.Range(-2, 5))));
+            Assert.AreEqual("[2, 1, 0, -1, -2]", Json.Serialize(new Stack<int>(Enumerable.Range(-2, 5))));
+            Assert.AreEqual("[\"1\", 2, 3.3, \"Green\"]", Json.Serialize(new List<object>() { "1", 2, 3.3, ConsoleColor.Green }));
         }
 
         public void ShouldSerializeArray()
