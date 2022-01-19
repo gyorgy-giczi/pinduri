@@ -8,6 +8,7 @@
             Pinduri.Tests.ContainerTests.Go();
             Pinduri.Tests.OrmTests.Go();
             Pinduri.Tests.JsonTests.Go();
+            Pinduri.Tests.DiffMergeTests.Go();
         }
     }
 }
