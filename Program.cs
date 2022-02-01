@@ -17,6 +17,7 @@
                 Pinduri.Tests.JsonTests.Go();
                 Pinduri.Tests.DiffMergeTests.Go();
                 Pinduri.Tests.ScmTests.Go();
+                Pinduri.Tests.WildcardTests.Go();
             }
         }
     }
