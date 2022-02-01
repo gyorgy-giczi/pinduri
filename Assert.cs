@@ -2,7 +2,7 @@ using System;
 
 namespace Pinduri.Tests
 {
-    class Assert
+    static class Assert
     {
         public static void AreEqual<T>(T expected, T actual, string message = null) { if (!Equals(expected, actual)) { throw new Exception(string.Join(". ", $"Expected '{expected}' but got '{actual}'", message)); } }
 

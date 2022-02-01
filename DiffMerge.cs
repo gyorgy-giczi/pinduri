@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Pinduri
 {
-    public class DiffMerge
+    public static class DiffMerge
     {
         public static IEnumerable<string> Diff(IEnumerable<string> a, IEnumerable<string> b)
         {
