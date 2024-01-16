@@ -5,12 +5,23 @@
     "version": "0.2.0",
     "configurations": [
 {
-    "name": ".NET Core Launch (console)",
+    "name": "Run tests",
     "type": "coreclr",
     "request": "launch",
     "preLaunchTask": "build",
     "program": "${workspaceFolder}/bin/Debug/netcoreapp5/pinduri.dll",
     "args": [],
+    "cwd": "${workspaceFolder}",
+    "stopAtEntry": false,
+    "console": "internalConsole"
+},
+{
+    "name": "Run website",
+    "type": "coreclr",
+    "request": "launch",
+    "preLaunchTask": "build",
+    "program": "${workspaceFolder}/bin/Debug/netcoreapp5/pinduri.dll",
+    "args": ["web"],
     "cwd": "${workspaceFolder}",
     "stopAtEntry": false,
     "console": "internalConsole"

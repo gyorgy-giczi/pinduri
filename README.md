@@ -11,6 +11,7 @@ My goal is to learn from implementing some minimalistic software components that
 - **Source code manager**: inspired by Git, single-user, not distributed, support for branching/merging/diff/history
 - **Diff-merge algorithm**
 - **Wildcard pattern matcher**
+- **Http server**
 
 All stuff is put into one single repository, however they are independent to each other.
 
