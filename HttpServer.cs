@@ -75,5 +75,21 @@ namespace Pinduri
             writer.WriteLine($"#Fields: date time cs-method cs-uri sc-status sc-bytes time-taken");
             return (ctx, next) => System.Diagnostics.Stopwatch.StartNew().Map(sw => next(ctx).Tap(ctx => writer.WriteLine($"{now().ToString("u")} {ctx.Get<string>("Request.Method").Map(x => string.IsNullOrEmpty(x) ? "-" : x)} {(ctx.Get<Uri>("Request.Url")?.PathAndQuery).Map(x => string.IsNullOrEmpty(x) ? "-" : x)} {(ctx.Get<object>("Response.status")?.ToString().Replace(" ", "+")).Map(x => string.IsNullOrEmpty(x) ? "-" : x)} {ctx.Get<Stream>("Response.BodyStream")?.Length.ToString() ?? "-"} {sw.ElapsedMilliseconds}")));
         }
+
+        public static Middleware CookieHandler() => (ctx, next) => ctx.Get<string>("Request.Headers.Cookie").Map(x => ParseKeyValueList(x, ';')).Select(x => (Key: Uri.UnescapeDataString(x.Key.Trim()), Value: Uri.UnescapeDataString(x.Value?.Trim()))).Aggregate(ctx, (a, x) => a.Set($"Request.Cookies.{x.Key}", x.Value)).Map(x => next(x));
+
+        public static Middleware Session((Func<string, Context> Load, Action<string, Context> Store) sessionStore, Func<string> idGenerator = default)
+        {
+            sessionStore = (Load: sessionStore.Load ?? new Func<string, Context>(x => new KeyValuePair<string, object>[0]), Store: sessionStore.Store ?? new Action<string, Context>((_, _) => { }));
+            idGenerator = idGenerator ?? new Func<string>(() => Guid.NewGuid().ToString());
+            return (ctx, next) => (sessionId: ctx.Get<string>("Request.Cookies.SessionId"), ctx)
+                .Map(x => (string.IsNullOrEmpty(x.sessionId) ? idGenerator().Map(newSessionId => (sessionId: newSessionId, ctx: ctx.Append(new KeyValuePair<string, object>("Response.Headers.Set-Cookie", $"SessionId={newSessionId}")))) : x).Map(x => (sessionId: x.sessionId, ctx: x.ctx.Set("Request.SessionId", x.sessionId))))
+                .Map(x => (x.sessionId, ctx: sessionStore.Load(x.sessionId).Aggregate(x.ctx, (a, x) => a.Set($"Session.{x.Key}", x.Value))))
+                .Map(x => (x.sessionId, ctx: next(x.ctx)))
+                .Tap(x => x.ctx.Where(y => y.Key.StartsWith("Session.", StringComparison.OrdinalIgnoreCase)).Select(y => new KeyValuePair<string, object>(y.Key.Substring(8), y.Value)).Tap(y => sessionStore.Store(x.sessionId, y)))
+                .Map(x => x.ctx.Where(x => !x.Key.StartsWith("Session.", StringComparison.OrdinalIgnoreCase)));
+        }
+
+        public static (Func<string, Context> Load, Action<string, Context> Store) CreateInMemorySessionStore() => new Dictionary<string, Context>().Map(x => (Load: new Func<string, Context>(sessionId => !string.IsNullOrEmpty(sessionId) && x.ContainsKey(sessionId) ? x[sessionId] : new KeyValuePair<string, object>[0]), Store: new Action<string, Context>((sessionId, values) => x[sessionId ?? ""] = values)));
     }
-} // line #79
+} // line #95

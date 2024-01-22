@@ -1378,6 +1378,336 @@ namespace Pinduri.Tests
             }
         }
 
+       private class CookieHandlerTest
+        {
+            public void ShouldNotExpandCookies_When_CookieHeaderIsNull()
+            {
+                var target = HttpServer.CookieHandler();
+                var ctx = NewContext().Set("Request.Headers.Cookie", null);
+                var expected = Stringify(ctx);
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldNotExpandCookies_When_CookieHeaderIsEmpty()
+            {
+                var target = HttpServer.CookieHandler();
+                var ctx = NewContext().Set("Request.Headers.Cookie", "");
+                var expected = Stringify(ctx);
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldExpandCookies_When_CookieHeaderIsNotEmpty()
+            {
+                var target = HttpServer.CookieHandler();
+                var ctx = NewContext().Set("Request.Headers.Cookie", "roarr=some-value");
+                var expected = new[]
+                {
+                    "Request.Cookies.roarr (String): some-value",
+                    "Request.Headers.Cookie (String): roarr=some-value",
+                };
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldExpandCookies_When_CookieHeaderHasMultipleCookies()
+            {
+                var target = HttpServer.CookieHandler();
+                var ctx = NewContext().Set("Request.Headers.Cookie", "roarr=some-value;roarr2=some-other-value");
+                var expected = new[]
+                {
+                    "Request.Cookies.roarr (String): some-value",
+                    "Request.Cookies.roarr2 (String): some-other-value",
+                    "Request.Headers.Cookie (String): roarr=some-value;roarr2=some-other-value",
+                };
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldExpandCookies_When_CookiesHaveNoValue()
+            {
+                var target = HttpServer.CookieHandler();
+                var ctx = NewContext().Set("Request.Headers.Cookie", "roarr;roarr2=;roarr3;");
+                var expected = new[]
+                {
+                    "Request.Cookies.roarr (String): ",
+                    "Request.Cookies.roarr2 (String): ",
+                    "Request.Cookies.roarr3 (String): ",
+                    "Request.Headers.Cookie (String): roarr;roarr2=;roarr3;",
+                };
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldExpandCookies_When_ValueIsUrlEncoded()
+            {
+                var target = HttpServer.CookieHandler();
+                var cookieValue = string.Concat(Enumerable.Range(0, 256).Select(x => (char)x));
+                var ctx = NewContext().Set("Request.Headers.Cookie", "roarr=" + Uri.EscapeDataString(cookieValue));
+                var expected = new[]
+                {
+                    "Request.Cookies.roarr (String): " + cookieValue,
+                    "Request.Headers.Cookie (String): roarr=%00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~%7F%C2%80%C2%81%C2%82%C2%83%C2%84%C2%85%C2%86%C2%87%C2%88%C2%89%C2%8A%C2%8B%C2%8C%C2%8D%C2%8E%C2%8F%C2%90%C2%91%C2%92%C2%93%C2%94%C2%95%C2%96%C2%97%C2%98%C2%99%C2%9A%C2%9B%C2%9C%C2%9D%C2%9E%C2%9F%C2%A0%C2%A1%C2%A2%C2%A3%C2%A4%C2%A5%C2%A6%C2%A7%C2%A8%C2%A9%C2%AA%C2%AB%C2%AC%C2%AD%C2%AE%C2%AF%C2%B0%C2%B1%C2%B2%C2%B3%C2%B4%C2%B5%C2%B6%C2%B7%C2%B8%C2%B9%C2%BA%C2%BB%C2%BC%C2%BD%C2%BE%C2%BF%C3%80%C3%81%C3%82%C3%83%C3%84%C3%85%C3%86%C3%87%C3%88%C3%89%C3%8A%C3%8B%C3%8C%C3%8D%C3%8E%C3%8F%C3%90%C3%91%C3%92%C3%93%C3%94%C3%95%C3%96%C3%97%C3%98%C3%99%C3%9A%C3%9B%C3%9C%C3%9D%C3%9E%C3%9F%C3%A0%C3%A1%C3%A2%C3%A3%C3%A4%C3%A5%C3%A6%C3%A7%C3%A8%C3%A9%C3%AA%C3%AB%C3%AC%C3%AD%C3%AE%C3%AF%C3%B0%C3%B1%C3%B2%C3%B3%C3%B4%C3%B5%C3%B6%C3%B7%C3%B8%C3%B9%C3%BA%C3%BB%C3%BC%C3%BD%C3%BE%C3%BF",
+                };
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldExpandCookies_When_ValueContainsSemicolonAndEqualSign()
+            {
+                var target = HttpServer.CookieHandler();
+                var cookieValue = "value;a=b";
+                var ctx = NewContext().Set("Request.Headers.Cookie", "roarr=" + Uri.EscapeDataString(cookieValue));
+                var expected = new[]
+                {
+                    "Request.Cookies.roarr (String): " + cookieValue,
+                    "Request.Headers.Cookie (String): roarr=value%3Ba%3Db",
+                };
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldExpandCookies_When_KeyIsUrlEncoded()
+            {
+                var target = HttpServer.CookieHandler();
+                var cookieKey = string.Concat(Enumerable.Range(0, 256).Select(x => (char)x));
+                var ctx = NewContext().Set("Request.Headers.Cookie", Uri.EscapeDataString(cookieKey) + "=roarr");
+                var expected = new[]
+                {
+                    "Request.Cookies." + cookieKey + " (String): roarr",
+                    "Request.Headers.Cookie (String): %00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~%7F%C2%80%C2%81%C2%82%C2%83%C2%84%C2%85%C2%86%C2%87%C2%88%C2%89%C2%8A%C2%8B%C2%8C%C2%8D%C2%8E%C2%8F%C2%90%C2%91%C2%92%C2%93%C2%94%C2%95%C2%96%C2%97%C2%98%C2%99%C2%9A%C2%9B%C2%9C%C2%9D%C2%9E%C2%9F%C2%A0%C2%A1%C2%A2%C2%A3%C2%A4%C2%A5%C2%A6%C2%A7%C2%A8%C2%A9%C2%AA%C2%AB%C2%AC%C2%AD%C2%AE%C2%AF%C2%B0%C2%B1%C2%B2%C2%B3%C2%B4%C2%B5%C2%B6%C2%B7%C2%B8%C2%B9%C2%BA%C2%BB%C2%BC%C2%BD%C2%BE%C2%BF%C3%80%C3%81%C3%82%C3%83%C3%84%C3%85%C3%86%C3%87%C3%88%C3%89%C3%8A%C3%8B%C3%8C%C3%8D%C3%8E%C3%8F%C3%90%C3%91%C3%92%C3%93%C3%94%C3%95%C3%96%C3%97%C3%98%C3%99%C3%9A%C3%9B%C3%9C%C3%9D%C3%9E%C3%9F%C3%A0%C3%A1%C3%A2%C3%A3%C3%A4%C3%A5%C3%A6%C3%A7%C3%A8%C3%A9%C3%AA%C3%AB%C3%AC%C3%AD%C3%AE%C3%AF%C3%B0%C3%B1%C3%B2%C3%B3%C3%B4%C3%B5%C3%B6%C3%B7%C3%B8%C3%B9%C3%BA%C3%BB%C3%BC%C3%BD%C3%BE%C3%BF=roarr",
+                };
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldExpandCookies_When_KeyContainsSemicolonAndEqualSign()
+            {
+                var target = HttpServer.CookieHandler();
+                var cookieKey = "key;a=b";
+                var ctx = NewContext().Set("Request.Headers.Cookie", Uri.EscapeDataString(cookieKey) + "=roarr");
+                var expected = new[]
+                {
+                    "Request.Cookies." + cookieKey + " (String): roarr",
+                    "Request.Headers.Cookie (String): key%3Ba%3Db=roarr",
+                };
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldTrimValueAndKey()
+            {
+                var target = HttpServer.CookieHandler();
+                var ctx = NewContext().Set("Request.Headers.Cookie", " roarr  =   some-value    ");
+                var expected = new[]
+                {
+                    "Request.Cookies.roarr (String): some-value",
+                    "Request.Headers.Cookie (String):  roarr  =   some-value    ",
+                };
+
+                var result = target(ctx, DefaultNext);
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+        }
+
+        private class SessionTest
+        {
+            public void ShouldStoreNotThrowError_When_SessionIdIsNull()
+            {
+                var target = HttpServer.CreateInMemorySessionStore();
+                target.Store(null, NewContext());
+            }
+
+            public void ShouldStoreNotThrowError_When_SessionIsNull()
+            {
+                var target = HttpServer.CreateInMemorySessionStore();
+                target.Store("roarr", null);
+
+                var result = target.Load("roarr");
+                Assert.AreEqual(null, result);
+            }
+
+            public void ShouldGetEmptySession_When_SessionIdIsNull()
+            {
+                var target = HttpServer.CreateInMemorySessionStore();
+                var result = target.Load(null);
+
+                Assert.AreEqual("", Stringify(result));
+            }
+
+            public void ShouldGetEmptySession_When_SessionIdIsNullEvenIfStoredBefore()
+            {
+                var target = HttpServer.CreateInMemorySessionStore();
+                target.Store(null, NewContext().Set("roarr", "some-value"));
+                var result = target.Load(null);
+
+                Assert.AreEqual("", Stringify(result));
+            }
+
+            public void ShouldGetEmptySession_When_SessionIdIsEmpty()
+            {
+                var target = HttpServer.CreateInMemorySessionStore();
+
+                var result = target.Load("");
+                Assert.AreEqual("", Stringify(result));
+            }
+
+            public void ShouldGetEmptySession_When_SessionIdIsEmptyEvenIfStoredBefore()
+            {
+                var target = HttpServer.CreateInMemorySessionStore();
+                target.Store("", NewContext().Set("roarr", "some-value"));
+
+                var result = target.Load("");
+                Assert.AreEqual("", Stringify(result));
+            }
+
+            public void ShouldGetEmptySession_When_SessionDoesNotExist()
+            {
+                var target = HttpServer.CreateInMemorySessionStore();
+                var result = target.Load("roarr");
+
+                Assert.AreEqual("", Stringify(result));
+            }
+
+            public void ShouldGetSession_When_SessionExist()
+            {
+                var sessionId = "roarr";
+                var session = NewContext().Set("roarr1", "some-roarr-value");
+                var target = HttpServer.CreateInMemorySessionStore();
+                target.Store(sessionId, session);
+                var result = target.Load("roarr");
+
+                Assert.AreEqual(Stringify(session), Stringify(result));
+            }
+
+            public void ShouldGenerateNewSessionId_When_SessionIdCookieIsMissing()
+            {
+                Func<string> idGenerator = () => "roarr";
+                var store = HttpServer.CreateInMemorySessionStore();
+                var target = HttpServer.Session(store, idGenerator);
+                var ctx = NewContext();
+                var next = new Func<Context, Context>(result =>
+                {
+                    var expected = new[]
+                    {
+                        "Request.SessionId (String): roarr",
+                        "Response.Headers.Set-Cookie (String): SessionId=roarr",
+                    };
+
+                    Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+                    return ctx;
+                });
+
+                target(ctx, next);
+            }
+
+            public void ShouldGenerateNewSessionId_When_SessionIdCookieIsEmpty()
+            {
+                Func<string> idGenerator = () => "roarr";
+                var store = HttpServer.CreateInMemorySessionStore();
+                var target = HttpServer.Session(store, idGenerator);
+                var ctx = NewContext().Set("Request.Headers.Cookie", "SessionId=");
+                var next = new Func<Context, Context>(result =>
+                {
+                    var expected = new[]
+                    {
+                        "Request.Headers.Cookie (String): SessionId=",
+                        "Request.SessionId (String): roarr",
+                        "Response.Headers.Set-Cookie (String): SessionId=roarr",
+                    };
+
+                    Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+                    return ctx;
+                });
+
+                target(ctx, next);
+            }
+
+            public void ShouldUseSessionIdFromCookie()
+            {
+                var store = HttpServer.CreateInMemorySessionStore();
+                var target = HttpServer.Session(store);
+                var ctx = NewContext().Set("Request.Cookies.SessionId", "roarr");
+                var next = new Func<Context, Context>(result =>
+                {
+                    var expected = new[]
+                    {
+                        "Request.Cookies.SessionId (String): roarr",
+                        "Request.SessionId (String): roarr",
+                    };
+
+                    Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+                    return ctx;
+                });
+
+                target(ctx, next);
+            }
+
+            public void ShouldStoreSessionValues()
+            {
+                var store = HttpServer.CreateInMemorySessionStore();
+                var target = HttpServer.Session(store);
+                var ctx = NewContext().Set("Request.Cookies.SessionId", "roarr");
+                var next = new Func<Context, Context>(result =>
+                {
+                    return ctx.Set("Session.Roarr", "some-session-value").Set("Session.Roarr2", "other-session-value");
+                });
+
+                target(ctx, next);
+
+                var result = store.Load("roarr");
+
+                var expected = new[]
+                {
+                    "Roarr (String): some-session-value",
+                    "Roarr2 (String): other-session-value",
+                };
+
+                Assert.AreEqual(string.Join(Environment.NewLine, expected), Stringify(result));
+            }
+
+            public void ShouldSessionValuesBeCleanedAfterExecution()
+            {
+                var sessionId = "roarr";
+                var store = HttpServer.CreateInMemorySessionStore();
+                var target = HttpServer.Session(store);
+
+                var expectedInside = new[]
+                {
+                    $"Request.Cookies.SessionId (String): {sessionId}",
+                    $"Request.SessionId (String): {sessionId}",
+                    "Session.SessionKey (String): some-session-value",
+                };
+
+                var expectedOutside = new[]
+                {
+                    $"Request.Cookies.SessionId (String): {sessionId}",
+                    $"Request.SessionId (String): {sessionId}",
+                };
+
+                var next = new Func<Context, Context>(ctx =>
+                {
+                    Assert.AreEqual(string.Join(Environment.NewLine, expectedInside), Stringify(ctx));
+                    return ctx;
+                });
+
+                store.Store(sessionId, NewContext().Set("SessionKey", "some-session-value"));
+
+                var result = target(NewContext().Set("Request.Cookies.SessionId", sessionId), next);
+                Assert.AreEqual(string.Join(Environment.NewLine, expectedOutside), Stringify(result));
+            }
+        }
+
         public static void Go()
         {
             new PUnit()
@@ -1396,6 +1726,8 @@ namespace Pinduri.Tests
                 .Test<ForRouteTest>()
                 .Test<StaticFileTest>()
                 .Test<RequestLoggerTest>()
+                .Test<CookieHandlerTest>()
+                .Test<SessionTest>()
 
                 .RunToConsole();
         }
