@@ -58,3 +58,9 @@ It can be helpful to create alias for the scm cli.
     pinduri-scm stage roarr.txt
     pinduri-scm commit "merge branch my-branch"
     pinduri-scm history
+
+## Website
+
+    dotnet run -- web
+
+Main page: [http://localhost:55445/] or [http://localhost:55445/index.html]
