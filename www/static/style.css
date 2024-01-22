@@ -16,6 +16,22 @@ main {
     display: inline-block;
 }
 
+menu {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+menu li {
+    display: inline-block;
+    margin: 0.5em;
+}
+
+menu li a,
+menu li a:visited {
+    color: darkblue;
+}
+
 h1 {
     color: darkcyan;
     text-align: center;
@@ -24,6 +40,8 @@ h1 {
 a,
 a:visited {
     color: darkcyan;
+    font-weight: bold;
+    text-decoration: none;
 }
 
 .text-center {
