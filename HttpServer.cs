@@ -28,7 +28,7 @@ namespace Pinduri
             ReadContext(stream)
             .Map(ctx => pipeline.Invoke(ctx))
             .Map(ctx => WriteContext(ctx, stream))
-            .Tap(ctx => ctx.Select(x => x.Value).OfType<IDisposable>().Select(x => x.Tap(x => x.Dispose())));
+            .Tap(ctx => ctx.Select(x => x.Value).OfType<IDisposable>().Select(x => x.Tap(x => x.Dispose())).ToList());
 
         internal static Context ReadContext(Stream stream) =>
             new StreamReader(stream, System.Text.Encoding.GetEncoding("iso-8859-1")).Map(reader => new KeyValuePair<string, object>[0].AsEnumerable()
@@ -66,7 +66,7 @@ namespace Pinduri
             mimeType = mimeType ?? ParseKeyValueList("html=text/html;png=image/png;jpg=image/jpg;css=text/css", ';').ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase).Map(mimeMap => new Func<string, string>(x => (x ?? "").Trim('.').Map(x => mimeMap.ContainsKey(x) ? mimeMap[x] : "application/octet-stream")));
             bool IsSubPathOf(string subPath, string basePath) => Path.GetRelativePath(basePath, subPath).Map(rel => !rel.StartsWith('.') && !Path.IsPathRooted(rel));
             bool IsValid(string path, string root) => IsSubPathOf(path, Path.GetFullPath(root ?? ".")) && File.Exists(path);
-            return (ctx, next) => Path.Combine(Path.GetFullPath(root ?? "."), ctx.Get<Uri>("Request.Url")?.LocalPath.Trim('/', '\\') ?? "").Map(path => IsValid(path, root) ? ctx.BinaryContent((readFile ?? File.ReadAllBytes)(path), "200", mimeType(Path.GetExtension(path))) : ctx.Set("Response.Status", 404));//.Map(x => next(x));
+            return (ctx, next) => Path.Combine(Path.GetFullPath(root ?? "."), ctx.Get<Uri>("Request.Url")?.LocalPath.Trim('/', '\\') ?? "").Map(path => IsValid(path, root) ? ctx.BinaryContent((readFile ?? File.ReadAllBytes)(path), "200", mimeType(Path.GetExtension(path))) : ctx.Set("Response.Status", 404));
         }
 
         public static Middleware RequestLogger(TextWriter writer = default, Func<DateTime> now = default)

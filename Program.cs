@@ -9,7 +9,7 @@
                 args = args[1..];
                 new Pinduri.Scm() { RootPath = ".", DiffContent = DiffMerge.Diff, MergeContent = DiffMerge.Merge }.Cli(args.Length == 0 ? new string[] { "" } : args);
             }
-            if (args.Length > 0 && args[0] == "web")
+            else if (args.Length > 0 && args[0] == "web")
             {
                 WebSite.Run("./www", 55445);
             }
