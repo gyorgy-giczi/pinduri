@@ -13,6 +13,10 @@
             {
                 WebSite.Run("./www", 55445);
             }
+            else if (args.Length > 0 && args[0] == "snake")
+            {
+                SnakeGame.Play();
+            }
             else
             {
                 Pinduri.Tests.PUnitTests.Go();
